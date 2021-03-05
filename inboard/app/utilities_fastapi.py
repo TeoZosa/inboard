@@ -6,7 +6,7 @@ from typing import List, Optional
 import toml
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from pydantic import BaseModel, BaseSettings
+from pydantic import BaseModel, BaseSettings, root_validator
 
 
 async def basic_auth(credentials: HTTPBasicCredentials = Depends(HTTPBasic())) -> str:
@@ -62,8 +62,9 @@ class Settings(BaseSettings):
     keywords: Optional[List[str]]
     classifiers: Optional[List[str]]
 
-    def __init__(self, **fields: dict) -> None:
-        super().__init__(**set_fields_from_pyproject(self.__fields__), **fields)
+    @root_validator(pre=True)
+    def set_default_values_from_pyproject(cls, values: dict) -> dict:
+        return {**values, **set_fields_from_pyproject(cls.__fields__)}
 
 
 class GetRoot(BaseModel):
